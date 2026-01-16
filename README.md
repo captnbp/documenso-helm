@@ -437,6 +437,20 @@ $ helm delete --purge my-release
 | `oidc.clientSecret`   | OIDC client secret                    | `""`    |
 | `oidc.existingSecret` | Existing secret with OIDC credentials | `""`    |
 
+### S3 Storage Configuration
+
+| Name                 | Description                                                                 | Value   |
+| -------------------- | --------------------------------------------------------------------------- | ------- |
+| `s3.enabled`         | Enable S3 storage for file uploads                                          | `false` |
+| `s3.transport`       | Upload transport type (s3)                                                  | `s3`    |
+| `s3.endpoint`        | S3 endpoint URL (e.g., s3.amazonaws.com or custom S3-compatible endpoint)   | `""`    |
+| `s3.region`          | AWS region (e.g., us-east-1)                                                | `""`    |
+| `s3.bucket`          | S3 bucket name                                                              | `""`    |
+| `s3.accessKeyId`     | AWS access key ID                                                           | `""`    |
+| `s3.secretAccessKey` | AWS secret access key                                                       | `""`    |
+| `s3.forcePathStyle`  | Force path-style URLs (required for some S3-compatible services like MinIO) | `false` |
+| `s3.existingSecret`  | Existing secret containing S3 credentials                                   | `""`    |
+
 ### NetworkPolicy Configuration
 
 | Name                                                                      | Description                                                                        | Value                  |

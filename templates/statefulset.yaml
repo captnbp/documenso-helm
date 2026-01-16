@@ -163,6 +163,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "common.names.fullname" . }}
                   key: encryption-secondary-key
+            {{- if .Values.s3.enabled }}
+            # S3 Storage Configuration
+            - name: NEXT_PUBLIC_UPLOAD_TRANSPORT
+              value: {{ .Values.s3.transport | quote }}
+            {{- end }}
             {{- if .Values.smtp.host }}
             # SMTP Configuration
             - name: NEXT_PRIVATE_SMTP_TRANSPORT
