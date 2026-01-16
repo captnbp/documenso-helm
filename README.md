@@ -430,17 +430,20 @@ $ helm delete --purge my-release
 
 ### Documenso Configuration
 
-| Name                               | Description                                                                | Value                           |
-| ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------- |
-| `documenso.url`                    | Application URL (defaults to ingress hostname if not set)                  | `""`                            |
-| `documenso.nextAuthSecret`         | Secret for NextAuth.js session encryption (auto-generated if not provided) | `""`                            |
-| `documenso.existingSecretNextAuth` | Existing secret containing NextAuth secret                                 | `""`                            |
-| `documenso.disableTelemetry`       | Disable Documenso telemetry                                                | `true`                          |
-| `documenso.signing.cn`             | Certificate Common Name                                                    | `Documenso Signing Certificate` |
-| `documenso.signing.password`       | Certificate password (auto-generated if not provided)                      | `""`                            |
-| `documenso.signing.existingSecret` | Existing secret containing certificate password                            | `""`                            |
-| `documenso.signing.duration`       | Certificate validity duration                                              | `87600h`                        |
-| `documenso.signing.renewBefore`    | Renew certificate before expiration                                        | `720h`                          |
+| Name                                 | Description                                                                 | Value                           |
+| ------------------------------------ | --------------------------------------------------------------------------- | ------------------------------- |
+| `documenso.url`                      | Application URL (defaults to ingress hostname if not set)                   | `""`                            |
+| `documenso.nextAuthSecret`           | Secret for NextAuth.js session encryption (auto-generated if not provided)  | `""`                            |
+| `documenso.existingSecretNextAuth`   | Existing secret containing NextAuth secret                                  | `""`                            |
+| `documenso.encryptionKey`            | Primary encryption key for data encryption (auto-generated if not provided) | `""`                            |
+| `documenso.encryptionSecondaryKey`   | Secondary encryption key for key rotation (auto-generated if not provided)  | `""`                            |
+| `documenso.existingSecretEncryption` | Existing secret containing encryption keys                                  | `""`                            |
+| `documenso.disableTelemetry`         | Disable Documenso telemetry                                                 | `true`                          |
+| `documenso.signing.cn`               | Certificate Common Name                                                     | `Documenso Signing Certificate` |
+| `documenso.signing.password`         | Certificate password (auto-generated if not provided)                       | `""`                            |
+| `documenso.signing.existingSecret`   | Existing secret containing certificate password                             | `""`                            |
+| `documenso.signing.duration`         | Certificate validity duration                                               | `87600h`                        |
+| `documenso.signing.renewBefore`      | Renew certificate before expiration                                         | `720h`                          |
 
 ### OIDC Configuration
 

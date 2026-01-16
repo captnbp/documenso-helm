@@ -764,6 +764,18 @@ documenso:
   ##
   existingSecretNextAuth: ""
   
+  ## @param documenso.encryptionKey Primary encryption key for data encryption (auto-generated if not provided)
+  ##
+  encryptionKey: ""
+  
+  ## @param documenso.encryptionSecondaryKey Secondary encryption key for key rotation (auto-generated if not provided)
+  ##
+  encryptionSecondaryKey: ""
+  
+  ## @param documenso.existingSecretEncryption Existing secret containing encryption keys
+  ##
+  existingSecretEncryption: ""
+  
   ## @param documenso.disableTelemetry Disable Documenso telemetry
   ##
   disableTelemetry: true

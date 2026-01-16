@@ -154,6 +154,17 @@ spec:
                   key: nextauth-secret
             - name: NEXT_PUBLIC_WEBAPP_URL
               value: {{ include "documenso.url" . | quote }}
+            # Encryption Keys
+            - name: NEXT_PRIVATE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.names.fullname" . }}
+                  key: encryption-key
+            - name: NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.names.fullname" . }}
+                  key: encryption-secondary-key
             {{- if .Values.smtp.host }}
             # SMTP Configuration
             - name: NEXT_PRIVATE_SMTP_HOST

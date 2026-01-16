@@ -208,6 +208,38 @@ Generate signing certificate password
 {{- end -}}
 
 {{/*
+Generate primary encryption key
+*/}}
+{{- define "documenso.encryptionKey" -}}
+{{- if .Values.documenso.encryptionKey -}}
+{{- .Values.documenso.encryptionKey -}}
+{{- else -}}
+{{- $secretData := (lookup "v1" "Secret" $.Release.Namespace (include "common.names.fullname" .)).data }}
+{{- if and $secretData (hasKey $secretData "encryption-key") }}
+{{- index $secretData "encryption-key" | b64dec }}
+{{- else }}
+{{- randAlphaNum 64 }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Generate secondary encryption key
+*/}}
+{{- define "documenso.encryptionSecondaryKey" -}}
+{{- if .Values.documenso.encryptionSecondaryKey -}}
+{{- .Values.documenso.encryptionSecondaryKey -}}
+{{- else -}}
+{{- $secretData := (lookup "v1" "Secret" $.Release.Namespace (include "common.names.fullname" .)).data }}
+{{- if and $secretData (hasKey $secretData "encryption-secondary-key") }}
+{{- index $secretData "encryption-secondary-key" | b64dec }}
+{{- else }}
+{{- randAlphaNum 64 }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Get application URL
 */}}
 {{- define "documenso.url" -}}
@@ -217,7 +249,7 @@ Get application URL
 {{- if .Values.ingress.tls -}}
 {{- printf "https://%s" .Values.ingress.hostname -}}
 {{- else -}}
-{{- printf "http://%s" .Values.ingress.hostname -}}
+{{- printf "https://%s" .Values.ingress.hostname -}}
 {{- end -}}
 {{- else -}}
 {{- printf "http://localhost:3000" -}}
