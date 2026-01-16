@@ -1,0 +1,78 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "documenso.postgresql.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: database
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  instances: {{ .Values.postgresql.instances }}
+  
+  postgresql:
+    {{- if .Values.postgresql.parameters }}
+    parameters:
+      {{- toYaml .Values.postgresql.parameters | nindent 6 }}
+    {{- end }}
+  
+  bootstrap:
+    initdb:
+      database: {{ include "documenso.database.name" . | quote }}
+      owner: {{ include "documenso.database.username" . | quote }}
+      secret:
+        name: {{ include "documenso.postgresql.secretName" . }}
+  
+  storage:
+    size: {{ .Values.postgresql.storage.size | quote }}
+    {{- if .Values.postgresql.storage.storageClass }}
+    storageClass: {{ .Values.postgresql.storage.storageClass | quote }}
+    {{- end }}
+    {{- if .Values.postgresql.storage.pvcTemplate }}
+    pvcTemplate:
+    {{- toYaml .Values.postgresql.storage.pvcTemplate | nindent 6 }}
+    {{- end }}
+  {{- if .Values.postgresql.resources }}
+  resources:
+  {{- toYaml .Values.postgresql.resources | nindent 4 }}
+  {{- end }}
+  {{- if .Values.postgresql.affinity }}
+  affinity:
+  {{- toYaml .Values.postgresql.affinity | nindent 4 }}
+  {{- end }}
+  {{- if .Values.postgresql.tolerations }}
+  tolerations:
+  {{- toYaml .Values.postgresql.tolerations | nindent 4 }}
+  {{- end }}
+  {{- if .Values.postgresql.nodeSelector }}
+  nodeSelector:
+  {{- toYaml .Values.postgresql.nodeSelector | nindent 4 }}
+  {{- end }}
+
+  {{- if .Values.postgresql.monitoring.enabled }}
+  monitoring:
+    enablePodMonitor: true
+  {{- end }}
+  
+  {{- if .Values.postgresql.backup.enabled }}
+  backup:
+    plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: {{ .Values.postgresql.backup.barmanObjectName }}
+  {{- end }}
+
+  {{- if .Values.postgresql.superuserSecret }}
+  superuserSecret:
+    name: {{ .Values.postgresql.superuserSecret }}
+  {{- end }}
+
+  {{- if .Values.postgresql.tls.enabled }}
+  certificates:
+    serverTLSSecret: {{ include "documenso.postgresql.fullname" . }}-crt
+    serverCASecret: {{ include "documenso.postgresql.fullname" . }}-crt
+  {{- end }}
+{{- end }}

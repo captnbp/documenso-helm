@@ -1,0 +1,30 @@
+annotations:
+  category: DeveloperTools
+  artifacthub.io/images: |
+    - name: documenso
+      image: docker.io/documenso/documenso:v2.3.1
+  artifacthub.io/license: MIT
+name: documenso
+apiVersion: v2
+appVersion: 2.3.1
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    tags:
+      - bitnami-common
+    version: 2.x.x
+description: "Documenso is an open-source document signing platform"
+home: https://github.com/documenso/documenso
+icon: https://documenso.com/favicon.ico
+keywords:
+  - documenso
+  - document-signing
+  - esignature
+maintainers:
+  - name: Benoît Pourre
+    email: benoit.pourre@gmail.com
+    url: https://github.com/captnbp
+sources:
+  - https://github.com/documenso/documenso
+  - https://lab.frogg.it/doca/documenso-helm
+version: 0.3.0

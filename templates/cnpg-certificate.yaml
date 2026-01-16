@@ -1,0 +1,38 @@
+{{- if and .Values.postgresql.enabled .Values.postgresql.tls.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "documenso.postgresql.fullname" . }}-crt
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  secretTemplate:
+    labels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgresql
+      {{- if .Values.commonLabels }}
+      {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 6 }}
+      {{- end }}
+    {{- if .Values.commonAnnotations }}
+    annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 6 }}
+    {{- end }}
+  secretName: {{ include "documenso.postgresql.fullname" . }}-crt
+  duration: 4320h0m0s # 180d
+  renewBefore: 2160h0m0s # 90d
+  dnsNames:
+    - {{ include "documenso.database.host" . | quote }}
+  usages:
+    - server auth
+  issuerRef:
+    name: {{ include "documenso.issuerName" . }}
+    kind: {{ .Values.tls.issuerRef.kind }}
+    group: {{ .Values.tls.issuerRef.group }}
+
+---
+{{- end }}

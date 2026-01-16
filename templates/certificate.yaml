@@ -1,0 +1,46 @@
+{{- if (include "documenso.createTlsSecret" .) }}
+{{- $releaseNamespace := .Release.Namespace }}
+{{- $clusterDomain := .Values.clusterDomain }}
+{{- $fullname := include "common.names.fullname" . }}
+{{- $serviceName := include "common.names.fullname" . }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "common.names.fullname" . }}-crt
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: documenso
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  secretTemplate:
+    labels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: documenso
+      {{- if .Values.commonLabels }}
+      {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 6 }}
+      {{- end }}
+    {{- if .Values.commonAnnotations }}
+    annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 6 }}
+    {{- end }}
+  secretName: {{ include "common.names.fullname" . }}-crt
+  duration: 4320h0m0s # 180d
+  renewBefore: 2160h0m0s # 90d
+  dnsNames:
+    - "{{ printf "%s.%s.svc.%s" $serviceName $releaseNamespace $clusterDomain }}"
+    - "localhost"
+  ipAddresses:
+    - "127.0.0.1"
+    - "::1"
+  usages:
+    - server auth
+  issuerRef:
+    name: {{ include "documenso.issuerName" . }}
+    kind: {{ .Values.tls.issuerRef.kind }}
+    group: {{ .Values.tls.issuerRef.group }}
+
+---
+{{- end }}

@@ -1,0 +1,112 @@
+{{- if and .Values.networkPolicy.postgresql.enabled .Values.postgresql.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "documenso.postgresql.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: database
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/instance: {{ include "documenso.postgresql.fullname" . }}
+      app.kubernetes.io/component: database
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from documenso
+    - from:
+        - podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 14 }}
+              app.kubernetes.io/component: documenso
+      ports:
+        - protocol: TCP
+          port: 5432
+    {{- if .Values.networkPolicy.postgresql.ingress.fromMonitoring.enabled }}
+    # Allow traffic from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+          {{- if .Values.networkPolicy.postgresql.ingress.fromMonitoring.podSelector }}
+          podSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.postgresql.ingress.fromMonitoring.podSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+          {{- end }}
+      ports:
+        - protocol: TCP
+          port: 9187
+    {{- end }}
+    {{- if and .Values.networkPolicy.postgresql.ingress.fromPostgresqlInstances.enabled (gt (int .Values.postgresql.instances) 1) }}
+    # Allow traffic between PostgreSQL instances for replication
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+              app.kubernetes.io/instance: {{ include "documenso.postgresql.fullname" . }}
+              app.kubernetes.io/component: database
+      ports:
+        - protocol: TCP
+          port: 5432
+    {{- end }}
+    {{- if .Values.networkPolicy.postgresql.ingress.fromCNPG.enabled }}
+    # Allow traffic from CNPG operator
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.postgresql.ingress.fromCNPG.namespaceSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+          podSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.postgresql.ingress.fromCNPG.podSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 8000
+    {{- end }}
+  egress:
+    # Allow traffic to DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- if and .Values.networkPolicy.postgresql.egress.toObjectStorage.enabled .Values.postgresql.backup.enabled }}
+    # Allow traffic to Object Storage for backups
+    - to:
+        {{- range .Values.networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: 443
+    {{- end }}
+    # Allow traffic between PostgreSQL instances for replication
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+              app.kubernetes.io/instance: {{ include "documenso.postgresql.fullname" . }}
+              app.kubernetes.io/component: database
+      ports:
+        - protocol: TCP
+          port: 5432
+{{- end }}

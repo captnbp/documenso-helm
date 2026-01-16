@@ -1,0 +1,52 @@
+{{- if .Values.documenso.signing }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "common.names.fullname" . }}-signing
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: documenso
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  secretTemplate:
+    labels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: documenso
+      {{- if .Values.commonLabels }}
+      {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 6 }}
+      {{- end }}
+    {{- if .Values.commonAnnotations }}
+    annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 6 }}
+    {{- end }}
+  secretName: {{ include "common.names.fullname" . }}-signing-cert
+  duration: {{ .Values.documenso.signing.duration }}
+  renewBefore: {{ .Values.documenso.signing.renewBefore }}
+  subject:
+    organizations:
+      - {{ .Values.tls.subject.organizations }}
+    organizationalUnits:
+      - {{ .Values.tls.subject.organizationalUnits }}
+    countries:
+      - {{ .Values.tls.subject.countries }}
+  commonName: {{ .Values.documenso.signing.cn | quote }}
+  privateKey:
+    algorithm: RSA
+    size: 4096
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        name: {{ include "common.names.fullname" . }}-signing
+        key: password
+  usages:
+    - digital signature
+    - key encipherment
+  issuerRef:
+    name: {{ include "documenso.issuerName" . }}
+    kind: {{ .Values.tls.issuerRef.kind }}
+    group: {{ .Values.tls.issuerRef.group }}
+{{- end }}

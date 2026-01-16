@@ -1,0 +1,131 @@
+{{- if .Values.networkPolicy.documenso.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: documenso
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  podSelector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
+      app.kubernetes.io/component: documenso
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    {{- if or .Values.networkPolicy.addExternalClientAccess .Values.networkPolicy.documenso.ingress.fromIngressController.enabled }}
+    - ports:
+        - port: {{ .Values.containerPorts.http }}
+          protocol: TCP
+        {{- if .Values.tls.enabled }}
+        - protocol: TCP
+          port: {{ .Values.containerPorts.https }}
+        {{- end }}
+      from:
+        {{- if .Values.networkPolicy.documenso.addExternalClientAccess }}
+        - podSelector:
+            matchLabels:
+              {{ template "common.names.fullname" . }}-client: "true"
+        {{- end }}
+        {{- if .Values.networkPolicy.documenso.ingress.fromIngressController.enabled }}
+        # Allow traffic from Ingress Controller to http port
+        - namespaceSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.documenso.ingress.fromIngressController.namespaceSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+          {{- if .Values.networkPolicy.documenso.ingress.fromIngressController.podSelector }}
+          podSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.documenso.ingress.fromIngressController.podSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+          {{- end }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.containerPorts.http }}
+        {{- if .Values.tls.enabled }}
+        - protocol: TCP
+          port: {{ .Values.containerPorts.https }}
+        {{- end }}
+    {{- end }}
+    {{- if and .Values.metrics.enabled .Values.networkPolicy.documenso.ingress.fromMonitoring.enabled }}
+    # Allow traffic from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.documenso.ingress.fromMonitoring.namespaceSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+          {{- if .Values.networkPolicy.documenso.ingress.fromMonitoring.podSelector }}
+          podSelector:
+            matchLabels:
+              {{- range $key, $value := .Values.networkPolicy.documenso.ingress.fromMonitoring.podSelector }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+          {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.containerPorts.http }}
+        {{- if .Values.tls.enabled }}
+        - protocol: TCP
+          port: {{ .Values.containerPorts.https }}
+        {{- end }}
+    {{- end }}
+    {{- if .Values.networkPolicy.documenso.extraIngress }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.documenso.extraIngress "context" $ ) | nindent 4 }}
+    {{- end }}
+  egress:
+    # Allow traffic to DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- if .Values.networkPolicy.documenso.egress.toInternet.enabled }}
+    # Allow traffic to Internet (trackers and peers)
+    - to:
+        {{- range .Values.networkPolicy.documenso.egress.toInternet.cidrBlocks }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+      ports:
+        {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.documenso.egress.toInternet.ports "context" $ ) | nindent 8 }}
+    {{- end }}
+    {{- if .Values.networkPolicy.documenso.egress.toSMTP.enabled }}
+    # Allow traffic to SMTP servers
+    - to:
+        {{- range .Values.networkPolicy.documenso.egress.toSMTP.cidrBlocks }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+      ports:
+        {{- range .Values.networkPolicy.documenso.egress.toSMTP.ports }}
+        - protocol: TCP
+          port: {{ . }}
+        {{- end }}
+    {{- end }}
+    {{- if and .Values.networkPolicy.postgresql.enabled .Values.postgresql.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+              app.kubernetes.io/instance: {{ include "documenso.postgresql.fullname" . }}
+              app.kubernetes.io/component: database
+      ports:
+        - protocol: TCP
+          port: 5432
+    {{- end }}
+    {{- if .Values.networkPolicy.documenso.egress.extraEgress }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.documenso.networkPolicy.egress.extraEgress "context" $ ) | nindent 4 }}
+    {{- end }}
+{{- end }}

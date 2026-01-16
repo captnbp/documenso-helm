@@ -1,0 +1,8 @@
+---
+include:
+  - project: doca/gitlab-ci-lib
+    ref: main
+    file: /pipelines/helm.yaml
+
+variables:
+  CHART_PATH: ""
