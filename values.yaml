@@ -601,7 +601,7 @@ tls:
 metrics:
   ## @param metrics.enabled Enable the export of Prometheus metrics
   ##
-  enabled: true
+  enabled: false
   ## Prometheus Operator ServiceMonitor configuration
   ##
   serviceMonitor:
