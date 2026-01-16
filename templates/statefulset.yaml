@@ -221,6 +221,8 @@ spec:
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
           envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-env
             {{- if .Values.extraEnvVarsCM }}
             - configMapRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsCM "context" $) }}
@@ -291,10 +293,6 @@ spec:
             - name: signing-cert
               mountPath: /certs/signing
               readOnly: true
-            - name: env-file
-              mountPath: /app/apps/remix/.env
-              subPath: .env
-              readOnly: true
             {{- if .Values.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
@@ -311,10 +309,6 @@ spec:
         - name: signing-cert
           secret:
             secretName: {{ include "common.names.fullname" . }}-signing-cert
-            defaultMode: 420
-        - name: env-file
-          secret:
-            secretName: {{ include "common.names.fullname" . }}-env
             defaultMode: 420
         {{- if .Values.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
