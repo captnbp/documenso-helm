@@ -138,7 +138,7 @@ spec:
           env:
             # Database Configuration
             - name: NEXT_PRIVATE_DIRECT_DATABASE_URL
-              value: "postgresql://{{ include "documenso.database.username" . }}:$(DB_PASSWORD)@{{ include "documenso.database.host" . }}:{{ include "documenso.database.port" . }}/{{ include "documenso.database.name" . }}"
+              value: "postgresql://{{ include "documenso.database.username" . }}:$DB_PASSWORD@{{ include "documenso.database.host" . }}:{{ include "documenso.database.port" . }}/{{ include "documenso.database.name" . }}"
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -167,6 +167,8 @@ spec:
                   key: encryption-secondary-key
             {{- if .Values.smtp.host }}
             # SMTP Configuration
+            - name: NEXT_PRIVATE_SMTP_TRANSPORT
+              value: {{ .Values.smtp.transport | quote }}
             - name: NEXT_PRIVATE_SMTP_HOST
               value: {{ .Values.smtp.host | quote }}
             - name: NEXT_PRIVATE_SMTP_PORT

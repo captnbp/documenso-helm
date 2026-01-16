@@ -62,7 +62,6 @@ graph TB
     CNPGOp -->|Management: 5432, 8000<br/>NetworkPolicy: Ingress| PG1
     CNPGOp -->|Management: 5432, 8000<br/>NetworkPolicy: Ingress| PG2
     
-    Prometheus -.->|Metrics: 3000<br/>NetworkPolicy: Ingress<br/>Optional| Doc
     Prometheus -.->|Metrics: 9187<br/>NetworkPolicy: Ingress<br/>Optional| PG1
     Prometheus -.->|Metrics: 9187<br/>NetworkPolicy: Ingress<br/>Optional| PG2
 
@@ -252,7 +251,7 @@ $ helm delete --purge my-release
 | `podSecurityContext.fsGroup`                        | Group ID for the container                                                                                 | `1001`           |
 | `podSecurityContext.seccompProfile.type`            | Type of seccomp profile to use                                                                             | `RuntimeDefault` |
 | `containerSecurityContext.enabled`                  | Enable container Security Context                                                                          | `true`           |
-| `containerSecurityContext.runAsUser`                | User ID for the container                                                                                  | `0`              |
+| `containerSecurityContext.runAsUser`                | User ID for the container                                                                                  | `1001`           |
 | `containerSecurityContext.runAsNonRoot`             | Avoid running as root User                                                                                 | `false`          |
 | `containerSecurityContext.allowPrivilegeEscalation` | Allow privilege escalation                                                                                 | `true`           |
 | `containerSecurityContext.readOnlyRootFilesystem`   | Read-only root filesystem                                                                                  | `false`          |
@@ -368,23 +367,6 @@ $ helm delete --purge my-release
 | `tls.issuerRef.kind`               | Kind of the cert-manager issuer resource (defaults to "Issuer")                            | `Issuer`          |
 | `tls.issuerRef.group`              | Group of the cert-manager issuer resource (defaults to "cert-manager.io")                  | `cert-manager.io` |
 
-### Prometheus metrics
-
-| Name                                       | Description                                                                                            | Value   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------- |
-| `metrics.enabled`                          | Enable the export of Prometheus metrics                                                                | `false` |
-| `metrics.serviceMonitor.enabled`           | if `true`, creates a Prometheus Operator ServiceMonitor (also requires `metrics.enabled` to be `true`) | `true`  |
-| `metrics.serviceMonitor.namespace`         | Namespace in which Prometheus is running                                                               | `""`    |
-| `metrics.serviceMonitor.annotations`       | Additional custom annotations for the ServiceMonitor                                                   | `{}`    |
-| `metrics.serviceMonitor.labels`            | Extra labels for the ServiceMonitor                                                                    | `{}`    |
-| `metrics.serviceMonitor.jobLabel`          | The name of the label on the target service to use as the job name in Prometheus                       | `""`    |
-| `metrics.serviceMonitor.honorLabels`       | honorLabels chooses the metric's labels on collisions with target labels                               | `false` |
-| `metrics.serviceMonitor.interval`          | Interval at which metrics should be scraped.                                                           | `""`    |
-| `metrics.serviceMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                                                | `""`    |
-| `metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                               | `[]`    |
-| `metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                             | `[]`    |
-| `metrics.serviceMonitor.selector`          | Prometheus instance selector labels                                                                    | `{}`    |
-
 ### Database parameters
 
 | Name                                         | Description                                                             | Value       |
@@ -417,16 +399,17 @@ $ helm delete --purge my-release
 
 ### SMTP Configuration
 
-| Name                  | Description                           | Value       |
-| --------------------- | ------------------------------------- | ----------- |
-| `smtp.host`           | SMTP host                             | `""`        |
-| `smtp.port`           | SMTP port                             | `587`       |
-| `smtp.username`       | Username for the SMTP authentication. | `""`        |
-| `smtp.password`       | Password for the SMTP service.        | `""`        |
-| `smtp.from`           | SMTP sender email address             | `""`        |
-| `smtp.fromName`       | SMTP sender display name              | `Documenso` |
-| `smtp.secure`         | Use TLS/SSL for SMTP connection       | `true`      |
-| `smtp.existingSecret` | Existing secret with SMTP credentials | `""`        |
+| Name                  | Description                                                            | Value       |
+| --------------------- | ---------------------------------------------------------------------- | ----------- |
+| `smtp.transport`      | SMTP transport protocol (smtp-auth, smtp-api, resend, or mailchannels) | `smtp-auth` |
+| `smtp.host`           | SMTP host                                                              | `""`        |
+| `smtp.port`           | SMTP port                                                              | `587`       |
+| `smtp.username`       | Username for the SMTP authentication.                                  | `""`        |
+| `smtp.password`       | Password for the SMTP service.                                         | `""`        |
+| `smtp.from`           | SMTP sender email address                                              | `""`        |
+| `smtp.fromName`       | SMTP sender display name                                               | `Documenso` |
+| `smtp.secure`         | Use TLS/SSL for SMTP connection                                        | `true`      |
+| `smtp.existingSecret` | Existing secret with SMTP credentials                                  | `""`        |
 
 ### Documenso Configuration
 
@@ -462,9 +445,6 @@ $ helm delete --purge my-release
 | `networkPolicy.documenso.ingress.fromIngressController.enabled`           | Allow traffic from Ingress Controller                                              | `true`                 |
 | `networkPolicy.documenso.ingress.fromIngressController.namespaceSelector` | Namespace selector for Ingress Controller                                          | `{}`                   |
 | `networkPolicy.documenso.ingress.fromIngressController.podSelector`       | Pod selector for Ingress Controller                                                | `{}`                   |
-| `networkPolicy.documenso.ingress.fromMonitoring.enabled`                  | Allow traffic from monitoring namespace                                            | `true`                 |
-| `networkPolicy.documenso.ingress.fromMonitoring.namespaceSelector`        | Namespace selector for monitoring                                                  | `{}`                   |
-| `networkPolicy.documenso.ingress.fromMonitoring.podSelector`              | Pod selector for monitoring                                                        | `{}`                   |
 | `networkPolicy.documenso.egress.toSMTP.enabled`                           | Allow traffic to SMTP servers                                                      | `true`                 |
 | `networkPolicy.documenso.egress.toSMTP.ports`                             | SMTP ports to allow                                                                | `[]`                   |
 | `networkPolicy.documenso.egress.toSMTP.cidrBlocks`                        | CIDR blocks to SMTP                                                                | `["0.0.0.0/0","::/0"]` |

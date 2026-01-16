@@ -21,10 +21,6 @@ spec:
     - ports:
         - port: {{ .Values.containerPorts.http }}
           protocol: TCP
-        {{- if .Values.tls.enabled }}
-        - protocol: TCP
-          port: {{ .Values.containerPorts.https }}
-        {{- end }}
       from:
         {{- if .Values.networkPolicy.documenso.addExternalClientAccess }}
         - podSelector:
@@ -49,33 +45,6 @@ spec:
       ports:
         - protocol: TCP
           port: {{ .Values.containerPorts.http }}
-        {{- if .Values.tls.enabled }}
-        - protocol: TCP
-          port: {{ .Values.containerPorts.https }}
-        {{- end }}
-    {{- end }}
-    {{- if and .Values.metrics.enabled .Values.networkPolicy.documenso.ingress.fromMonitoring.enabled }}
-    # Allow traffic from monitoring namespace
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              {{- range $key, $value := .Values.networkPolicy.documenso.ingress.fromMonitoring.namespaceSelector }}
-              {{ $key }}: {{ $value | quote }}
-              {{- end }}
-          {{- if .Values.networkPolicy.documenso.ingress.fromMonitoring.podSelector }}
-          podSelector:
-            matchLabels:
-              {{- range $key, $value := .Values.networkPolicy.documenso.ingress.fromMonitoring.podSelector }}
-              {{ $key }}: {{ $value | quote }}
-              {{- end }}
-          {{- end }}
-      ports:
-        - protocol: TCP
-          port: {{ .Values.containerPorts.http }}
-        {{- if .Values.tls.enabled }}
-        - protocol: TCP
-          port: {{ .Values.containerPorts.https }}
-        {{- end }}
     {{- end }}
     {{- if .Values.networkPolicy.documenso.extraIngress }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.documenso.extraIngress "context" $ ) | nindent 4 }}
