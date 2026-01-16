@@ -137,7 +137,7 @@ spec:
           {{- end }}
           env:
             # Database Configuration
-            - name: DATABASE_URL
+            - name: NEXT_PRIVATE_DIRECT_DATABASE_URL
               value: "postgresql://{{ include "documenso.database.username" . }}:$(DB_PASSWORD)@{{ include "documenso.database.host" . }}:{{ include "documenso.database.port" . }}/{{ include "documenso.database.name" . }}"
             - name: DB_PASSWORD
               valueFrom:
@@ -178,18 +178,14 @@ spec:
               value: {{ .Values.smtp.secure | quote }}
             {{- end }}
             {{- if .Values.oidc.enabled }}
-            # OIDC Configuration
-            - name: NEXT_PRIVATE_OIDC_PROVIDER
-              value: {{ .Values.oidc.provider | quote }}
-            - name: NEXT_PRIVATE_OIDC_CLIENT_ID
+            # Google OIDC Configuration
+            - name: NEXT_PRIVATE_GOOGLE_CLIENT_ID
               value: {{ .Values.oidc.clientId | quote }}
-            - name: NEXT_PRIVATE_OIDC_CLIENT_SECRET
+            - name: NEXT_PRIVATE_GOOGLE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "common.names.fullname" . }}
                   key: oidc-client-secret
-            - name: NEXT_PRIVATE_OIDC_ISSUER
-              value: {{ .Values.oidc.issuer | quote }}
             {{- end }}
             # Signing Certificate Configuration
             - name: NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH

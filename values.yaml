@@ -798,10 +798,6 @@ oidc:
   ##
   enabled: false
   
-  ## @param oidc.provider OIDC provider name
-  ##
-  provider: ""
-  
   ## @param oidc.clientId OIDC client ID
   ##
   clientId: ""
@@ -809,10 +805,6 @@ oidc:
   ## @param oidc.clientSecret OIDC client secret
   ##
   clientSecret: ""
-  
-  ## @param oidc.issuer OIDC issuer URL
-  ##
-  issuer: ""
   
   ## @param oidc.existingSecret Existing secret with OIDC credentials
   ##

@@ -372,7 +372,7 @@ $ helm delete --purge my-release
 
 | Name                                       | Description                                                                                            | Value   |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------- |
-| `metrics.enabled`                          | Enable the export of Prometheus metrics                                                                | `true`  |
+| `metrics.enabled`                          | Enable the export of Prometheus metrics                                                                | `false` |
 | `metrics.serviceMonitor.enabled`           | if `true`, creates a Prometheus Operator ServiceMonitor (also requires `metrics.enabled` to be `true`) | `true`  |
 | `metrics.serviceMonitor.namespace`         | Namespace in which Prometheus is running                                                               | `""`    |
 | `metrics.serviceMonitor.annotations`       | Additional custom annotations for the ServiceMonitor                                                   | `{}`    |
@@ -447,10 +447,8 @@ $ helm delete --purge my-release
 | Name                  | Description                           | Value   |
 | --------------------- | ------------------------------------- | ------- |
 | `oidc.enabled`        | Enable OIDC authentication            | `false` |
-| `oidc.provider`       | OIDC provider name                    | `""`    |
 | `oidc.clientId`       | OIDC client ID                        | `""`    |
 | `oidc.clientSecret`   | OIDC client secret                    | `""`    |
-| `oidc.issuer`         | OIDC issuer URL                       | `""`    |
 | `oidc.existingSecret` | Existing secret with OIDC credentials | `""`    |
 
 ### NetworkPolicy Configuration
