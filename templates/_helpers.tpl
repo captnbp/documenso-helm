@@ -90,9 +90,9 @@ Return the CNP secret name
 Return the CNP database password
 */}}
 {{- define "documenso.postgresql.password" -}}
-{{- $secretData := (lookup "v1" "Secret" $.Release.Namespace (include "documenso.postgresql.secretName" .)).data }}
-{{- if and $secretData (hasKey $secretData "password") }}
-{{- index $secretData "password" | b64dec }}
+{{- if .Values.postgresql.database.password -}}
+{{- .Values.postgresql.database.password -}}
+{{- end }}
 {{- else }}
 {{- randAlphaNum 32 }}
 {{- end }}

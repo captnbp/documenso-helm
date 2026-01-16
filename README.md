@@ -379,6 +379,7 @@ $ helm delete --purge my-release
 | `postgresql.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`        |
 | `postgresql.database.name`                   | Database name                                                           | `documenso` |
 | `postgresql.database.username`               | Database username                                                       | `documenso` |
+| `postgresql.database.password`               | Database password                                                       | `""`        |
 | `postgresql.database.existingSecret`         | Existing secret with database credentials                               | `""`        |
 | `postgresql.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`        |
 | `postgresql.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`        |

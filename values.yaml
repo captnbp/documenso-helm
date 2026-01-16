@@ -603,6 +603,7 @@ tls:
 ## @param postgresql.storage.pvcTemplate Additional PVC template configuration for PostgreSQL PVCs
 ## @param postgresql.database.name Database name
 ## @param postgresql.database.username Database username
+## @param postgresql.database.password Database password
 ## @param postgresql.database.existingSecret Existing secret with database credentials
 ## @param postgresql.resources Resource requests and limits for PostgreSQL pod
 ## @param postgresql.affinity Affinity configuration for PostgreSQL pod
@@ -630,6 +631,7 @@ postgresql:
   database:
     name: documenso
     username: documenso
+    password: ""
     existingSecret: ""
   resources: {}
   affinity: {}
