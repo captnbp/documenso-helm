@@ -92,7 +92,6 @@ Return the CNP database password
 {{- define "documenso.postgresql.password" -}}
 {{- if .Values.postgresql.database.password -}}
 {{- .Values.postgresql.database.password -}}
-{{- end }}
 {{- else }}
 {{- randAlphaNum 32 }}
 {{- end }}
