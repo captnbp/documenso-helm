@@ -136,9 +136,7 @@ spec:
           args: {{- include "common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
           {{- end }}
           env:
-            # Database Configuration
-            - name: NEXT_PRIVATE_DIRECT_DATABASE_URL
-              value: "postgresql://{{ include "documenso.database.username" . }}:$DB_PASSWORD@{{ include "documenso.database.host" . }}:{{ include "documenso.database.port" . }}/{{ include "documenso.database.name" . }}"
+            # Database Password (used for variable expansion in .env file)
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -285,6 +283,10 @@ spec:
             - name: signing-cert
               mountPath: /certs/signing
               readOnly: true
+            - name: env-file
+              mountPath: /app/apps/remix/.env
+              subPath: .env
+              readOnly: true
             {{- if .Values.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
@@ -301,6 +303,10 @@ spec:
         - name: signing-cert
           secret:
             secretName: {{ include "common.names.fullname" . }}-signing-cert
+            defaultMode: 420
+        - name: env-file
+          secret:
+            secretName: {{ include "common.names.fullname" . }}-env
             defaultMode: 420
         {{- if .Values.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
