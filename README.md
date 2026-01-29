@@ -228,7 +228,7 @@ $ helm delete --purge my-release
 | -------------------- | --------------------------------------------------------------------------- | --------------------- |
 | `image.registry`     | documenso image registry                                                    | `docker.io`           |
 | `image.repository`   | documenso image repository                                                  | `documenso/documenso` |
-| `image.tag`          | documenso image tag (immutable tags are recommended)                        | `v2.3.1`              |
+| `image.tag`          | documenso image tag (immutable tags are recommended)                        | `v2.5.0`              |
 | `image.pullPolicy`   | Image pull policy                                                           | `IfNotPresent`        |
 | `image.pullSecrets`  | Specify docker-registry secret names as an array                            | `[]`                  |
 | `image.debug`        | Specify if debug logs should be enabled                                     | `false`               |
