@@ -2,11 +2,11 @@ annotations:
   category: DeveloperTools
   artifacthub.io/images: |
     - name: documenso
-      image: docker.io/documenso/documenso:v2.5.0
+      image: docker.io/documenso/documenso:v2.6.0
   artifacthub.io/license: MIT
 name: documenso
 apiVersion: v2
-appVersion: 2.5.0
+appVersion: 2.6.0
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami

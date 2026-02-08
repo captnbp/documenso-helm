@@ -95,6 +95,6 @@ spec:
           port: 5432
     {{- end }}
     {{- if .Values.networkPolicy.documenso.egress.extraEgress }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.documenso.networkPolicy.egress.extraEgress "context" $ ) | nindent 4 }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.documenso.egress.extraEgress "context" $ ) | nindent 4 }}
     {{- end }}
 {{- end }}
