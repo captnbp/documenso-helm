@@ -951,7 +951,7 @@ networkPolicy:
 auxiliaryImage:
   registry: ghcr.io
   repository: cloudnative-pg/postgresql
-  tag: 18.3-system-trixie
+  tag: 18.4-system-trixie
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
