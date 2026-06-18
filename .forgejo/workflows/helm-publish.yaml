@@ -1,0 +1,244 @@
+name: Helm lint, test, publish, sign
+
+on:
+  push:
+    branches: [ main ]
+
+# jobs:
+#   lint-test-publish-sign:
+#     uses: doca/workflows/.forgejo/workflows/helm-publish.yaml@main
+#     secrets: inherit
+
+env:
+  VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+  VAULT_HOSTNAME: ${{ secrets.VAULT_HOSTNAME }}
+  REGISTRY: registry-1.docker.io
+  REGISTRY_USER: captnbp
+
+jobs:
+  lint:
+    name: Lint & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # - name: Setup Helm
+      #   uses: azure/setup-helm@v5
+      #   # with:
+      #   #   version: 'v3.15.0'
+
+      - name: Verify Helm
+        run: helm version
+
+      - name: Update Dependencies
+        run: helm dependency update
+
+      - name: Lint Chart
+        run: helm lint .
+
+      - name: Template Check
+        run: helm template . --debug
+
+  build:
+    name: Build & Package
+    needs: lint
+    runs-on: ubuntu-latest
+    outputs:
+      chart_name: ${{ steps.meta.outputs.chart_name }}
+      chart_version: ${{ steps.meta.outputs.chart_version }}
+      package_name: ${{ steps.package.outputs.package_name }}
+      chart_digest: ${{ steps.push.outputs.digest }}
+      chart_url: ${{ steps.push.outputs.url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # - name: Setup Helm
+      #   uses: azure/setup-helm@v5
+
+      - name: Get Chart Metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          CHART_NAME=$(helm show chart . | grep "^name:" | awk '{print $2}')
+          CHART_VERSION=$(helm show chart . | grep "^version:" | awk '{print $2}')
+          echo "chart_name=${CHART_NAME}" >> ${FORGEJO_OUTPUT}
+          echo "chart_version=${CHART_VERSION}" >> ${FORGEJO_OUTPUT}
+          echo "::debug::Chart: ${CHART_NAME} v${CHART_VERSION}"
+
+      - name: Package Chart
+        id: package
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="${{ steps.meta.outputs.chart_name }}-${{ steps.meta.outputs.chart_version }}.tgz"
+          helm dependency update
+          helm package . --version ${{ steps.meta.outputs.chart_version }}
+          echo "package_name=${PACKAGE_NAME}" >> ${FORGEJO_OUTPUT}
+          echo "::debug::Package name: ${PACKAGE_NAME}"
+
+      - name: Upload Artifact
+        uses: forgejo/upload-artifact@v4
+        with:
+          name: helm-chart
+          path: ${{ steps.package.outputs.package_name }}
+
+  publish:
+    name: Publish to OCI
+    if: forgejo.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    enable-openid-connect: true
+    outputs:
+      chart_url: ${{ steps.push.outputs.chart_url }}
+      chart_digest: ${{ steps.push.outputs.chart_digest }}
+    steps:
+      - name: Download Artifact
+        uses: forgejo/download-artifact@v7
+        with:
+          name: helm-chart
+
+      # - name: Setup Helm
+      #   uses: azure/setup-helm@v5
+
+      - name: Get JWT from OIDC
+        id: jwt
+        run: |
+          set -euo pipefail
+          JWT=$(curl -s -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${{ env.VAULT_ADDR }}" | cut -d: -f2 | cut -d'}' -f1)
+          if [ -z "$JWT" ]; then
+            echo "::error::Failed to retrieve JWT token"
+            exit 1
+          fi
+          echo "::add-mask::${JWT}"
+          echo "jwt=${JWT}" >> ${FORGEJO_OUTPUT}
+
+      - name: Authenticate to Vault
+        id: vault
+        run: |
+          set -euo pipefail
+          VAULT_TOKEN=$(VAULT_ADDR=${{ env.VAULT_ADDR }} vault write -field=token \
+            auth/jwt/${{ env.VAULT_HOSTNAME }}/login \
+            role=$(basename ${{ env.FORGEJO_REPOSITORY }}) \
+            jwt=${{ steps.jwt.outputs.jwt }})
+          if [ -z "$VAULT_TOKEN" ]; then
+            echo "::error::Vault authentication failed"
+            exit 1
+          fi
+          echo "::add-mask::${VAULT_TOKEN}"
+          echo "VAULT_TOKEN=${VAULT_TOKEN}" >> $FORGEJO_ENV
+
+      - name: Get OCI Credentials
+        id: creds
+        run: |
+          set -euo pipefail
+          OCI_CREDENTIALS=$(VAULT_TOKEN=${{ env.VAULT_TOKEN }} VAULT_ADDR=${{ env.VAULT_ADDR }} \
+            vault kv get -format=json secret/forgejo-runners/oci/docker-hub | jq -r '.data.data')
+          OCI_USERNAME=$(echo "$OCI_CREDENTIALS" | jq -r '.username')
+          OCI_PASSWORD=$(echo "$OCI_CREDENTIALS" | jq -r '.password')
+          if [ -z "$OCI_USERNAME" ] || [ -z "$OCI_PASSWORD" ]; then
+            echo "::error::Failed to retrieve OCI credentials"
+            exit 1
+          fi
+          #echo "::add-mask::${OCI_USERNAME}"
+          echo "::add-mask::${OCI_PASSWORD}"
+          echo "OCI_USERNAME=${OCI_USERNAME}" >> $FORGEJO_ENV
+          echo "OCI_PASSWORD=${OCI_PASSWORD}" >> $FORGEJO_ENV
+
+      - name: Login to OCI Registry
+        run: |
+          set -euo pipefail
+          echo "${{ env.OCI_PASSWORD }}" | helm registry login ${{ env.REGISTRY }} \
+            --username ${{ env.OCI_USERNAME }} \
+            --password-stdin
+
+      - name: Push to OCI
+        id: push
+        run: |
+          set -euo pipefail
+          OUTPUT=$(helm push ${{ needs.build.outputs.package_name }} \
+            oci://${{ env.REGISTRY }}/${{ env.REGISTRY_USER }} 2>&1)
+          echo "$OUTPUT"
+          CHART_URL=$(echo "$OUTPUT" | grep "Pushed" | awk '{print $2}')
+          CHART_DIGEST=$(echo "$OUTPUT" | grep "Digest" | awk '{print $2}')
+          echo "chart_url=${CHART_URL}" >> ${FORGEJO_OUTPUT}
+          echo "chart_digest=${CHART_DIGEST}" >> ${FORGEJO_OUTPUT}
+
+      - name: Logout on Success
+        run: helm registry logout ${{ env.REGISTRY }}
+
+      - name: Logout on Failure
+        if: failure()
+        run: helm registry logout ${{ env.REGISTRY }}
+
+  sign:
+    name: Sign with Cosign
+    needs: publish
+    runs-on: ubuntu-latest
+    enable-openid-connect: true
+    steps:
+      # - name: Setup Cosign
+      #   uses: sigstore/cosign-installer@v4
+
+      - name: Get JWT from OIDC
+        id: jwt
+        run: |
+          set -euo pipefail
+          JWT=$(curl -s -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${{ env.VAULT_ADDR }}" | cut -d: -f2 | cut -d'}' -f1)
+          echo "::add-mask::${JWT}"
+          echo "jwt=${JWT}" >> ${FORGEJO_OUTPUT}
+
+      - name: Authenticate to Vault
+        run: |
+          set -euo pipefail
+          VAULT_TOKEN=$(VAULT_ADDR=${{ env.VAULT_ADDR }} vault write -field=token \
+            auth/jwt/${{ env.VAULT_HOSTNAME }}/login \
+            role=$(basename ${{ env.FORGEJO_REPOSITORY }}) \
+            jwt=${{ steps.jwt.outputs.jwt }})
+          echo "::add-mask::${VAULT_TOKEN}"
+          echo "VAULT_TOKEN=${VAULT_TOKEN}" >> $FORGEJO_ENV
+
+      - name: Get OCI Credentials
+        id: creds
+        run: |
+          set -euo pipefail
+          OCI_CREDENTIALS=$(VAULT_TOKEN=${{ env.VAULT_TOKEN }} VAULT_ADDR=${{ env.VAULT_ADDR }} \
+            vault kv get -format=json secret/forgejo-runners/oci/docker-hub | jq -r '.data.data')
+          OCI_USERNAME=$(echo "$OCI_CREDENTIALS" | jq -r '.username')
+          OCI_PASSWORD=$(echo "$OCI_CREDENTIALS" | jq -r '.password')
+          if [ -z "$OCI_USERNAME" ] || [ -z "$OCI_PASSWORD" ]; then
+            echo "::error::Failed to retrieve OCI credentials"
+            exit 1
+          fi
+          echo "::add-mask::${OCI_USERNAME}"
+          echo "::add-mask::${OCI_PASSWORD}"
+          echo "OCI_USERNAME=${OCI_USERNAME}" >> $FORGEJO_ENV
+          echo "OCI_PASSWORD=${OCI_PASSWORD}" >> $FORGEJO_ENV
+
+      - name: Login to OCI Registry
+        run: |
+          set -euo pipefail
+          echo "${{ env.OCI_PASSWORD }}" | docker login ${{ env.REGISTRY }} \
+            --username ${{ env.OCI_USERNAME }} \
+            --password-stdin
+
+      - name: Sign Chart
+        run: |
+          set -euo pipefail
+          cosign sign --new-bundle-format --upload=true -y \
+            -a sig=forgejo-ci \
+            -a author=${FORGEJO_ACTOR} \
+            -a source=${FORGEJO_SERVER_URL}/${FORGEJO_REPOSITORY}/actions/runs/${FORGEJO_RUN_NUMBER}/jobs/${FORGEJO_JOB}/attempt/${FORGEJO_RUN_ATTEMPT} \
+            --key hashivault://cosign \
+            ${{ needs.publish.outputs.chart_url }}@${{ needs.publish.outputs.chart_digest }}
+
+      - name: Logout on Success
+        run: docker logout ${{ env.REGISTRY }}
+
+      - name: Logout on Failure
+        if: failure()
+        run: docker logout ${{ env.REGISTRY }}

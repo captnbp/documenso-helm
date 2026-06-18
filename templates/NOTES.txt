@@ -149,7 +149,7 @@ Access the pod you want to debug by executing:
 
 5. Monitoring:
 
-{{- if and $postgresqlEnabled .Values.postgresql.monitoring.enabled }}
+{{- if and $postgresqlEnabled .Values.postgresql.metrics.enabled }}
   ✓ PostgreSQL monitoring is ENABLED
 {{- end }}
 

@@ -1,0 +1,18 @@
+{{- if and .Values.postgresql.enabled .Values.postgresql.backup.enabled .Values.postgresql.backup.schedule.enabled }}
+apiVersion: barmancloud.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ include "documenso.postgresql.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: database-backup
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.postgresql.backup.schedule.cron | quote }}
+  backupOwnerReference: {{ .Values.postgresql.backup.schedule.backupOwnerReference | quote }}
+  cluster:
+    name: {{ include "documenso.postgresql.fullname" . }}
+  method: {{ .Values.postgresql.backup.schedule.method | quote }}
+{{- end }}

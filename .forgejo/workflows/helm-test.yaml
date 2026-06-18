@@ -1,0 +1,9 @@
+name: Helm lint and test
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-test:
+    uses: doca/workflows/.forgejo/workflows/helm-test.yaml@main

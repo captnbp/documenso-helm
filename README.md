@@ -139,7 +139,7 @@ This chart now uses [CloudNativePG](https://cloudnative-pg.io/) instead of Bitna
 1. **Install CloudNativePG Operator**: Before deploying this chart, ensure the CNPG operator is installed in your cluster:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.28.0.yaml
+kubectl apply -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.29.1.yaml
 ```
 
 2. **Update your values**: The PostgreSQL configuration has changed. Update your `values.yaml`:
@@ -167,8 +167,82 @@ postgresql:
 - **High availability**: Built-in support for HA configurations
 - **Backup and recovery**: Integrated backup solutions
 
+
+## Installing the Chart
+
 > **Note**: If you were using external PostgreSQL, no changes are needed. The external database configuration remains the same.
-=======
+
+## Barman ObjectStore Configuration (CNPG 1.29.1)
+
+This chart supports CloudNativePG 1.29.1 with Barman plugin 0.13.0 for backup object storage.
+
+### Supported Providers
+
+- **Amazon S3**: `s3://bucket-name/path`
+- **Azure Blob Storage**: `azure://container-name/path`
+- **Google Cloud Storage**: `gs://bucket-name/path`
+
+### Configuration Example (S3)
+
+```yaml
+postgresql:
+  barmanObjectStore:
+    enabled: true
+    destinationPath: "s3://my-backup-bucket/documenso-backups"
+    s3Credentials:
+      accessKeyId:
+        name: aws-creds
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: aws-creds
+        key: ACCESS_SECRET_KEY
+```
+
+### Requirements
+
+1. **CNPG Operator 1.29.1** must be installed
+2. **Barman Plugin 0.13.0** must be available
+3. Appropriate secrets must be created for your cloud provider
+
+### Installation
+
+```bash
+# Install CNPG 1.29.1 operator
+kubectl apply -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.29/releases/cnpg-1.29.1.yaml
+
+# Create credentials secret (example for S3)
+kubectl create secret generic aws-creds \
+  --from-literal=ACCESS_KEY_ID='your-access-key' \
+  --from-literal=ACCESS_SECRET_KEY='your-secret-key'
+```
+
+### Multiple Provider Examples
+
+#### Azure Blob Storage
+
+```yaml
+postgresql:
+  barmanObjectStore:
+    enabled: true
+    destinationPath: "azure://my-container/documenso-backups"
+    azureCredentials:
+      connectionString:
+        name: azure-creds
+        key: CONNECTION_STRING
+```
+
+#### Google Cloud Storage
+
+```yaml
+postgresql:
+  barmanObjectStore:
+    enabled: true
+    destinationPath: "gs://my-bucket/documenso-backups"
+    gcsCredentials:
+      applicationCredentials:
+        name: gcs-creds
+        key: APPLICATION_CREDENTIALS
+```
 
 ## Installing the Chart
 
@@ -222,13 +296,12 @@ $ helm delete --purge my-release
 | `diagnosticMode.command` | Command to override all containers in the chart release                                      | `["sleep"]`     |
 | `diagnosticMode.args`    | Args to override all containers in the chart release                                         | `["infinity"]`  |
 
-### documenso parameters
+### Documenso parameters
 
 | Name                 | Description                                                                 | Value                 |
 | -------------------- | --------------------------------------------------------------------------- | --------------------- |
 | `image.registry`     | documenso image registry                                                    | `docker.io`           |
 | `image.repository`   | documenso image repository                                                  | `documenso/documenso` |
-| `image.tag`          | documenso image tag (immutable tags are recommended)                        | `v2.5.0`              |
 | `image.pullPolicy`   | Image pull policy                                                           | `IfNotPresent`        |
 | `image.pullSecrets`  | Specify docker-registry secret names as an array                            | `[]`                  |
 | `image.debug`        | Specify if debug logs should be enabled                                     | `false`               |
@@ -238,7 +311,7 @@ $ helm delete --purge my-release
 | `command`            | Default container command (useful when using custom images). Use array form | `[]`                  |
 | `args`               | Default container args (useful when using custom images). Use array form    | `[]`                  |
 
-### documenso deployment/statefulset parameters
+### Documenso deployment/statefulset parameters
 
 | Name                                                | Description                                                                                                | Value            |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------- |
@@ -369,34 +442,64 @@ $ helm delete --purge my-release
 
 ### Database parameters
 
-| Name                                         | Description                                                             | Value       |
-| -------------------------------------------- | ----------------------------------------------------------------------- | ----------- |
-| `postgresql.enabled`                         | Enable CloudNativePG cluster deployment                                 | `true`      |
-| `postgresql.instances`                       | Number of PostgreSQL instances (1 for single instance)                  | `1`         |
-| `postgresql.parameters`                      | Postgresql parameters                                                   | `{}`        |
-| `postgresql.storage.size`                    | Storage size for PostgreSQL data                                        | `10Gi`      |
-| `postgresql.storage.storageClass`            | Storage class for PostgreSQL PVCs                                       | `""`        |
-| `postgresql.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`        |
-| `postgresql.database.name`                   | Database name                                                           | `documenso` |
-| `postgresql.database.username`               | Database username                                                       | `documenso` |
-| `postgresql.database.password`               | Database password                                                       | `""`        |
-| `postgresql.database.existingSecret`         | Existing secret with database credentials                               | `""`        |
-| `postgresql.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`        |
-| `postgresql.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`        |
-| `postgresql.tolerations`                     | Tolerations for PostgreSQL pod                                          | `{}`        |
-| `postgresql.nodeSelector`                    | Node selector for PostgreSQL pod                                        | `{}`        |
-| `postgresql.monitoring.enabled`              | Enable monitoring with PodMonitor                                       | `true`      |
-| `postgresql.backup.enabled`                  | Enable Barman plugin WAL backup configuration                           | `false`     |
-| `postgresql.backup.barmanObjectName`         | Barman ObjectStore name for backup                                      | `""`        |
-| `postgresql.superuserSecret`                 | Secret containing superuser credentials for the cluster                 | `""`        |
-| `postgresql.tls.enabled`                     | Enable TLS encryption for the cluster (requires cert-manager)           | `true`      |
-| `externalDatabase.host`                      | Database host                                                           | `""`        |
-| `externalDatabase.port`                      | Database port number                                                    | `5432`      |
-| `externalDatabase.username`                  | Non-root username for documenso                                         | `documenso` |
-| `externalDatabase.password`                  | Password for the non-root username for documenso                        | `""`        |
-| `externalDatabase.database`                  | documenso database name                                                 | `documenso` |
-| `externalDatabase.existingSecret`            | Name of an existing secret resource containing the database credentials | `""`        |
-| `externalDatabase.existingSecretPasswordKey` | Name of an existing secret key containing the database credentials      | `""`        |
+| Name                                                                      | Description                                                                                        | Value                     |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------- |
+| `postgresql.enabled`                                                      | Enable CloudNativePG cluster deployment                                                            | `true`                    |
+| `postgresql.instances`                                                    | Number of PostgreSQL instances (1 for single instance)                                             | `1`                       |
+| `postgresql.parameters`                                                   | Postgresql parameters                                                                              | `{}`                      |
+| `postgresql.storage.size`                                                 | Storage size for PostgreSQL data                                                                   | `10Gi`                    |
+| `postgresql.storage.storageClass`                                         | Storage class for PostgreSQL PVCs                                                                  | `""`                      |
+| `postgresql.storage.pvcTemplate`                                          | Additional PVC template configuration for PostgreSQL PVCs                                          | `{}`                      |
+| `postgresql.database.name`                                                | Database name                                                                                      | `documenso`               |
+| `postgresql.database.username`                                            | Database username                                                                                  | `documenso`               |
+| `postgresql.database.password`                                            | Database password                                                                                  | `""`                      |
+| `postgresql.database.existingSecret`                                      | Existing secret with database credentials                                                          | `""`                      |
+| `postgresql.resources`                                                    | Resource requests and limits for PostgreSQL pod                                                    | `{}`                      |
+| `postgresql.affinity`                                                     | Affinity configuration for PostgreSQL pod                                                          | `{}`                      |
+| `postgresql.tolerations`                                                  | Tolerations for PostgreSQL pod                                                                     | `{}`                      |
+| `postgresql.nodeSelector`                                                 | Node selector for PostgreSQL pod                                                                   | `{}`                      |
+| `postgresql.backup.enabled`                                               | Enable Barman plugin WAL backup configuration                                                      | `true`                    |
+| `postgresql.backup.barmanObjectName`                                      | Barman ObjectStore name for backup                                                                 | `""`                      |
+| `postgresql.superuserSecret`                                              | Secret containing superuser credentials for the cluster                                            | `""`                      |
+| `postgresql.tls.enabled`                                                  | Enable TLS encryption for the cluster (requires cert-manager)                                      | `true`                    |
+| `postgresql.metrics.podMonitor.enabled`                                   | if `true`, creates a Prometheus Operator podMonitor (also requires `metrics.enabled` to be `true`) | `true`                    |
+| `postgresql.metrics.podMonitor.namespace`                                 | Namespace in which Prometheus is running                                                           | `""`                      |
+| `postgresql.metrics.podMonitor.annotations`                               | Additional custom annotations for the podMonitor                                                   | `{}`                      |
+| `postgresql.metrics.podMonitor.labels`                                    | Extra labels for the podMonitor                                                                    | `{}`                      |
+| `postgresql.metrics.podMonitor.jobLabel`                                  | The name of the label on the target service to use as the job name in Prometheus                   | `""`                      |
+| `postgresql.metrics.podMonitor.honorLabels`                               | honorLabels chooses the metric's labels on collisions with target labels                           | `false`                   |
+| `postgresql.metrics.podMonitor.interval`                                  | Interval at which metrics should be scraped.                                                       | `""`                      |
+| `postgresql.metrics.podMonitor.scrapeTimeout`                             | Timeout after which the scrape is ended                                                            | `""`                      |
+| `postgresql.metrics.podMonitor.metricRelabelings`                         | Specify additional relabeling of metrics                                                           | `[]`                      |
+| `postgresql.metrics.podMonitor.relabelings`                               | Specify general relabeling                                                                         | `[]`                      |
+| `postgresql.backup.enabled`                                               | Enable Barman plugin WAL backup configuration                                                      | `true`                    |
+| `postgresql.backup.barmanObjectName`                                      | Barman ObjectStore name for backup of an existing ObjectStore                                      | `""`                      |
+| `postgresql.backup.schedule.enabled`                                      | Enable scheduled backups for the cluster                                                           | `true`                    |
+| `postgresql.backup.schedule.cron`                                         | Cron expression for the backup schedule                                                            | `0 0 0 * * *`             |
+| `postgresql.backup.schedule.backupOwnerReference`                         | Backup owner reference for the backup schedule (self or cluster)                                   | `self`                    |
+| `postgresql.backup.schedule.method`                                       | Backup method for the backup schedule (plugin, volumeSnapshot, or barmanObjectStore (default))     | `barmanObjectStore`       |
+| `postgresql.barmanObjectStore.enabled`                                    | Enable Barman ObjectStore configuration                                                            | `true`                    |
+| `postgresql.barmanObjectStore.destinationPath`                            | ObjectStore destination path                                                                       | `""`                      |
+| `postgresql.barmanObjectStore.endpointUrl`                                | ObjectStore endpoint URL (only for S3-compatible providers)                                        | `""`                      |
+| `postgresql.barmanObjectStore.wal.compression`                            | Compression algorithm for WAL files (bzip2, gzip, lz4, snappy, zx, zstd, or none)                  | `bzip2`                   |
+| `postgresql.barmanObjectStore.wal.retentionPolicy`                        | Retention policy for WAL files (e.g., "30d" for 30 days)                                           | `30d`                     |
+| `postgresql.barmanObjectStore.s3Credentials.accessKeyId.name`             | Name of the Kubernetes secret containing the S3 access key ID                                      | `""`                      |
+| `postgresql.barmanObjectStore.s3Credentials.accessKeyId.key`              | Key in the secret containing the S3 access key ID                                                  | `ACCESS_KEY_ID`           |
+| `postgresql.barmanObjectStore.s3Credentials.secretAccessKey.name`         | Name of the Kubernetes secret containing the S3 secret access key                                  | `""`                      |
+| `postgresql.barmanObjectStore.s3Credentials.secretAccessKey.key`          | Key in the secret containing the S3 secret access key                                              | `ACCESS_SECRET_KEY`       |
+| `postgresql.barmanObjectStore.azureCredentials.connectionString.name`     | Name of the Kubernetes secret containing the Azure connection string                               | `""`                      |
+| `postgresql.barmanObjectStore.azureCredentials.connectionString.key`      | Key in the secret containing the Azure connection string                                           | `CONNECTION_STRING`       |
+| `postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.name` | Name of the Kubernetes secret containing the GCS application credentials                           | `""`                      |
+| `postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.key`  | Key in the secret containing the GCS application credentials                                       | `APPLICATION_CREDENTIALS` |
+| `postgresql.extraPlugins`                                                 | Add extra plugins to the CloudNativePG cluster.                                                    | `[]`                      |
+| `postgresql.externalClusters`                                             | Add external clusters to the CloudNativePG cluster to restore a cluster from an object store       | `[]`                      |
+| `externalDatabase.host`                                                   | Database host                                                                                      | `""`                      |
+| `externalDatabase.port`                                                   | Database port number                                                                               | `5432`                    |
+| `externalDatabase.username`                                               | Non-root username for documenso                                                                    | `documenso`               |
+| `externalDatabase.password`                                               | Password for the non-root username for documenso                                                   | `""`                      |
+| `externalDatabase.database`                                               | documenso database name                                                                            | `documenso`               |
+| `externalDatabase.existingSecret`                                         | Name of an existing secret resource containing the database credentials                            | `""`                      |
+| `externalDatabase.existingSecretPasswordKey`                              | Name of an existing secret key containing the database credentials                                 | `""`                      |
 
 ### SMTP Configuration
 

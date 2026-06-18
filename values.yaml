@@ -58,7 +58,7 @@ diagnosticMode:
 ## ref: https://hub.docker.com/r/bitnami/documenso/tags/
 ## @param image.registry documenso image registry
 ## @param image.repository documenso image repository
-## @param image.tag documenso image tag (immutable tags are recommended)
+## @skip image.tag documenso image tag (immutable tags are recommended)
 ## @param image.pullPolicy Image pull policy
 ## @param image.pullSecrets Specify docker-registry secret names as an array
 ## @param image.debug Specify if debug logs should be enabled
@@ -66,7 +66,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: documenso/documenso
-  tag: v2.11.0
+  tag: v2.13.0
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -609,7 +609,6 @@ tls:
 ## @param postgresql.affinity Affinity configuration for PostgreSQL pod
 ## @param postgresql.tolerations Tolerations for PostgreSQL pod
 ## @param postgresql.nodeSelector Node selector for PostgreSQL pod
-## @param postgresql.monitoring.enabled Enable monitoring with PodMonitor
 ## @param postgresql.backup.enabled Enable Barman plugin WAL backup configuration
 ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/
 ## @param postgresql.backup.barmanObjectName Barman ObjectStore name for backup
@@ -637,11 +636,128 @@ postgresql:
   affinity: {}
   tolerations: {}
   nodeSelector: {}
-  monitoring:
-    enabled: true
+  metrics:
+    ## Prometheus Operator PodMonitor configuration
+    ##
+    podMonitor:
+      ## @param postgresql.metrics.podMonitor.enabled if `true`, creates a Prometheus Operator podMonitor (also requires `metrics.enabled` to be `true`)
+      ##
+      enabled: true
+      ## @param postgresql.metrics.podMonitor.namespace Namespace in which Prometheus is running
+      ##
+      namespace: ""
+      ## @param postgresql.metrics.podMonitor.annotations Additional custom annotations for the podMonitor
+      ##
+      annotations: {}
+      ## @param postgresql.metrics.podMonitor.labels Extra labels for the podMonitor
+      ##
+      labels: {}
+      ## @param postgresql.metrics.podMonitor.jobLabel The name of the label on the target service to use as the job name in Prometheus
+      ##
+      jobLabel: ""
+      ## @param postgresql.metrics.podMonitor.honorLabels honorLabels chooses the metric's labels on collisions with target labels
+      ##
+      honorLabels: false
+      ## @param postgresql.metrics.podMonitor.interval Interval at which metrics should be scraped.
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ## e.g:
+      ## interval: 10s
+      ##
+      interval: ""
+      ## @param postgresql.metrics.podMonitor.scrapeTimeout Timeout after which the scrape is ended
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ## e.g:
+      ## scrapeTimeout: 10s
+      ##
+      scrapeTimeout: ""
+      ## @param postgresql.metrics.podMonitor.metricRelabelings Specify additional relabeling of metrics
+      ##
+      metricRelabelings: []
+      ## @param postgresql.metrics.podMonitor.relabelings Specify general relabeling
+      ##
+      relabelings: []
+
   backup:
-    enabled: false
+    ## @param postgresql.backup.enabled Enable Barman plugin WAL backup configuration
+    ##
+    enabled: true
+    ## @param postgresql.backup.barmanObjectName Barman ObjectStore name for backup of an existing ObjectStore
     barmanObjectName: ""
+    ## ref: https://cloudnative-pg.io/docs/1.29/backup#scheduled-backups
+    schedule:
+      ## @param postgresql.backup.schedule.enabled Enable scheduled backups for the cluster
+      ##
+      enabled: true
+      ## @param postgresql.backup.schedule.cron Cron expression for the backup schedule
+      ##
+      cron: "0 0 0 * * *"  # At midnight every day
+      ## @param postgresql.backup.schedule.backupOwnerReference Backup owner reference for the backup schedule (self or cluster)
+      ## ref: https://cloudnative-pg.io/docs/1.29/backup#scheduled-backups
+      ##
+      backupOwnerReference: "self"
+      ## @param postgresql.backup.schedule.method Backup method for the backup schedule (plugin, volumeSnapshot, or barmanObjectStore (default))
+      ## ref: https://cloudnative-pg.io/docs/1.29/backup#backup-methods
+      method: "barmanObjectStore"
+
+  ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/object_stores/
+  barmanObjectStore:
+    ## @param postgresql.barmanObjectStore.enabled Enable Barman ObjectStore configuration
+    enabled: true
+    ## @param postgresql.barmanObjectStore.destinationPath ObjectStore destination path
+    ## Format depends on provider: s3://bucket/path, azure://container/path, gs://bucket/path
+    destinationPath: ""
+    ## @param postgresql.barmanObjectStore.endpointUrl ObjectStore endpoint URL (only for S3-compatible providers)
+    endpointUrl: ""
+    wal:
+      ## @param postgresql.barmanObjectStore.wal.compression Compression algorithm for WAL files (bzip2, gzip, lz4, snappy, zx, zstd, or none)
+      ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/compression/
+      ##
+      compression: "bzip2"
+      ## @param postgresql.barmanObjectStore.wal.retentionPolicy Retention policy for WAL files (e.g., "30d" for 30 days)
+      ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/retention
+      retentionPolicy: "30d"
+    ## S3 Credentials Configuration
+    s3Credentials:
+      accessKeyId:
+        ## @param postgresql.barmanObjectStore.s3Credentials.accessKeyId.name Name of the Kubernetes secret containing the S3 access key ID
+        ## @param postgresql.barmanObjectStore.s3Credentials.accessKeyId.key Key in the secret containing the S3 access key ID
+        name: ""
+        key: "ACCESS_KEY_ID"
+      secretAccessKey:
+        ## @param postgresql.barmanObjectStore.s3Credentials.secretAccessKey.name Name of the Kubernetes secret containing the S3 secret access key
+        ## @param postgresql.barmanObjectStore.s3Credentials.secretAccessKey.key Key in the secret containing the S3 secret access key
+        name: ""
+        key: "ACCESS_SECRET_KEY"
+    ## Azure Credentials Configuration
+    azureCredentials:
+      connectionString:
+        ## @param postgresql.barmanObjectStore.azureCredentials.connectionString.name Name of the Kubernetes secret containing the Azure connection string
+        ## @param postgresql.barmanObjectStore.azureCredentials.connectionString.key Key in the secret containing the Azure connection string
+        name: ""
+        key: "CONNECTION_STRING"
+    ## GCS Credentials Configuration
+    gcsCredentials:
+      applicationCredentials:
+        ## @param postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.name Name of the Kubernetes secret containing the GCS application credentials
+        ## @param postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.key Key in the secret containing the GCS application credentials
+        name: ""
+        key: "APPLICATION_CREDENTIALS"
+  
+  ## @param postgresql.extraPlugins [array] Add extra plugins to the CloudNativePG cluster.
+  ##
+  extraPlugins: []
+  ## @param postgresql.externalClusters [array] Add external clusters to the CloudNativePG cluster to restore a cluster from an object store
+  ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/#restoring-a-cluster
+  ## e.g:
+  ## - name: source
+  ##   plugin:
+  ##     name: barman-cloud.cloudnative-pg.io
+  ##     parameters:
+  ##       # Recovery Object Store (pull, read-only)
+  ##       barmanObjectName: minio-store
+  ##       serverName: cluster-example
+  ##
+  externalClusters: []
   superuserSecret: ""
   tls:
     enabled: true

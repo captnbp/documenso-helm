@@ -1,0 +1,42 @@
+{{- if .Values.postgresql.metrics.podMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "documenso.postgresql.fullname" . }}
+  namespace: {{ default (include "common.names.namespace" .) .Values.postgresql.metrics.podMonitor.namespace | quote }}
+  {{- $labels := include "common.tplvalues.merge" (dict "values" (list .Values.postgresql.metrics.podMonitor.labels .Values.commonLabels) "context" .) }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" $labels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: database
+  {{- if or .Values.postgresql.metrics.podMonitor.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.postgresql.metrics.podMonitor.annotations .Values.commonAnnotations) "context" .) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  jobLabel: {{ .Values.postgresql.metrics.podMonitor.jobLabel | quote }}
+  selector:
+    matchLabels:
+      cnpg.io/cluster: {{ include "documenso.postgresql.fullname" . }}
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      scheme: http
+      {{- if .Values.postgresql.metrics.podMonitor.interval }}
+      interval: {{ .Values.postgresql.metrics.podMonitor.interval }}
+      {{- end }}
+      {{- if .Values.postgresql.metrics.podMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ .Values.postgresql.metrics.podMonitor.scrapeTimeout }}
+      {{- end }}
+      {{- if .Values.postgresql.metrics.podMonitor.honorLabels }}
+      honorLabels: {{ .Values.postgresql.metrics.podMonitor.honorLabels }}
+      {{- end }}
+      {{- if .Values.postgresql.metrics.podMonitor.metricRelabelings }}
+      metricRelabelings: {{- include "common.tplvalues.render" ( dict "value" .Values.postgresql.metrics.podMonitor.metricRelabelings "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.postgresql.metrics.podMonitor.relabelings }}
+      relabelings: {{- include "common.tplvalues.render" ( dict "value" .Values.postgresql.metrics.podMonitor.relabelings "context" $) | nindent 8 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+    - {{ include "common.names.namespace" . | quote }}
+{{- end }}

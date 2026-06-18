@@ -50,21 +50,20 @@ spec:
   nodeSelector:
   {{- toYaml .Values.postgresql.nodeSelector | nindent 4 }}
   {{- end }}
-
-  {{- if .Values.postgresql.monitoring.enabled }}
-  monitoring:
-    enablePodMonitor: true
-  {{- end }}
-  
+  plugins:
   {{- if .Values.postgresql.backup.enabled }}
-  backup:
-    plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: {{ .Values.postgresql.backup.barmanObjectName }}
+        barmanObjectName: {{ .Values.postgresql.backup.barmanObjectName | default (include "documenso.postgresql.fullname" .) }}
   {{- end }}
-
+  {{- if .Values.postgresql.extraPlugins }}
+  {{- include "common.tplvalues.render" (dict "value" .Values.postgresql.extraPlugins "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if .Values.postgresql.externalClusters }}
+  externalClusters:
+  {{- include "common.tplvalues.render" (dict "value" .Values.postgresql.externalClusters "context" $) | nindent 4 }}
+  {{- end }}
   {{- if .Values.postgresql.superuserSecret }}
   superuserSecret:
     name: {{ .Values.postgresql.superuserSecret }}

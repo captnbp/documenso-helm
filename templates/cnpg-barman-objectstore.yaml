@@ -1,0 +1,40 @@
+{{- if and .Values.postgresql.enabled .Values.postgresql.barmanObjectStore.enabled (not .Values.postgresql.backup.barmanObjectName)}}
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "documenso.postgresql.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: database-backup
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  configuration:
+    destinationPath: {{ .Values.postgresql.barmanObjectStore.destinationPath | quote }}
+    endpointURL: {{ .Values.postgresql.barmanObjectStore.endpointURL | quote }}
+    {{- if .Values.postgresql.barmanObjectStore.s3Credentials }}
+    wal:
+      compression: {{ .Values.postgresql.barmanObjectStore.wal.compression | quote }}
+      retentionPolicy: {{ .Values.postgresql.barmanObjectStore.wal.retentionPolicy | quote }}
+    s3Credentials:
+      accessKeyId:
+        name: {{ .Values.postgresql.barmanObjectStore.s3Credentials.accessKeyId.name | quote }}
+        key: {{ .Values.postgresql.barmanObjectStore.s3Credentials.accessKeyId.key | quote }}
+      secretAccessKey:
+        name: {{ .Values.postgresql.barmanObjectStore.s3Credentials.secretAccessKey.name | quote }}
+        key: {{ .Values.postgresql.barmanObjectStore.s3Credentials.secretAccessKey.key | quote }}
+    {{- end }}
+    {{- if .Values.postgresql.barmanObjectStore.azureCredentials }}
+    azureCredentials:
+      connectionString:
+        name: {{ .Values.postgresql.barmanObjectStore.azureCredentials.connectionString.name | quote }}
+        key: {{ .Values.postgresql.barmanObjectStore.azureCredentials.connectionString.key | quote }}
+    {{- end }}
+    {{- if .Values.postgresql.barmanObjectStore.gcsCredentials }}
+    gcsCredentials:
+      applicationCredentials:
+        name: {{ .Values.postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.name | quote }}
+        key: {{ .Values.postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.key | quote }}
+    {{- end }}
+{{- end }}
