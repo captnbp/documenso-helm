@@ -52,9 +52,9 @@ diagnosticMode:
   args:
     - infinity
 
-## @section documenso parameters
+## @section Documenso parameters
 
-## Bitnami documenso image version
+## Documenso image version
 ## ref: https://hub.docker.com/r/bitnami/documenso/tags/
 ## @param image.registry documenso image registry
 ## @param image.repository documenso image repository
@@ -105,7 +105,7 @@ command: []
 ##
 args: []
 
-## @section documenso deployment/statefulset parameters
+## @section Documenso deployment/statefulset parameters
 
 ## @param schedulerName Specifies the schedulerName, if it's nil uses kube-scheduler
 ## https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
@@ -697,7 +697,7 @@ postgresql:
       backupOwnerReference: "self"
       ## @param postgresql.backup.schedule.method Backup method for the backup schedule (plugin, volumeSnapshot, or barmanObjectStore (default))
       ## ref: https://cloudnative-pg.io/docs/1.29/backup#backup-methods
-      method: "barmanObjectStore"
+      method: "plugin"
 
   ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/object_stores/
   barmanObjectStore:

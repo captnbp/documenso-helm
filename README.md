@@ -477,7 +477,7 @@ $ helm delete --purge my-release
 | `postgresql.backup.schedule.enabled`                                      | Enable scheduled backups for the cluster                                                           | `true`                    |
 | `postgresql.backup.schedule.cron`                                         | Cron expression for the backup schedule                                                            | `0 0 0 * * *`             |
 | `postgresql.backup.schedule.backupOwnerReference`                         | Backup owner reference for the backup schedule (self or cluster)                                   | `self`                    |
-| `postgresql.backup.schedule.method`                                       | Backup method for the backup schedule (plugin, volumeSnapshot, or barmanObjectStore (default))     | `barmanObjectStore`       |
+| `postgresql.backup.schedule.method`                                       | Backup method for the backup schedule (plugin, volumeSnapshot, or barmanObjectStore (default))     | `plugin`                  |
 | `postgresql.barmanObjectStore.enabled`                                    | Enable Barman ObjectStore configuration                                                            | `true`                    |
 | `postgresql.barmanObjectStore.destinationPath`                            | ObjectStore destination path                                                                       | `""`                      |
 | `postgresql.barmanObjectStore.endpointUrl`                                | ObjectStore endpoint URL (only for S3-compatible providers)                                        | `""`                      |
