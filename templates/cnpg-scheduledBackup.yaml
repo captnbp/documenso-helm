@@ -1,5 +1,5 @@
 {{- if and .Values.postgresql.enabled .Values.postgresql.backup.enabled .Values.postgresql.backup.schedule.enabled }}
-apiVersion: barmancloud.cnpg.io/v1
+apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
   name: {{ include "documenso.postgresql.fullname" . }}
