@@ -53,6 +53,7 @@ spec:
   plugins:
   {{- if .Values.postgresql.backup.enabled }}
     - name: barman-cloud.cloudnative-pg.io
+      enabled: true
       isWALArchiver: true
       parameters:
         barmanObjectName: {{ .Values.postgresql.backup.barmanObjectName | default (include "documenso.postgresql.fullname" .) }}
