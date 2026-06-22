@@ -16,7 +16,7 @@ spec:
     {{- if .Values.postgresql.barmanObjectStore.s3Credentials }}
     wal:
       compression: {{ .Values.postgresql.barmanObjectStore.wal.compression | quote }}
-      retentionPolicy: {{ .Values.postgresql.barmanObjectStore.wal.retentionPolicy | quote }}
+    retentionPolicy: {{ .Values.postgresql.barmanObjectStore.wal.retentionPolicy | quote }}
     s3Credentials:
       accessKeyId:
         name: {{ .Values.postgresql.barmanObjectStore.s3Credentials.accessKeyId.name | quote }}
