@@ -12,7 +12,7 @@ metadata:
 spec:
   configuration:
     destinationPath: {{ .Values.postgresql.barmanObjectStore.destinationPath | quote }}
-    endpointURL: {{ .Values.postgresql.barmanObjectStore.endpointURL | quote }}
+    endpointURL: {{ .Values.postgresql.barmanObjectStore.endpointUrl | quote }}
     {{- if .Values.postgresql.barmanObjectStore.s3Credentials }}
     wal:
       compression: {{ .Values.postgresql.barmanObjectStore.wal.compression | quote }}
@@ -25,13 +25,13 @@ spec:
         name: {{ .Values.postgresql.barmanObjectStore.s3Credentials.secretAccessKey.name | quote }}
         key: {{ .Values.postgresql.barmanObjectStore.s3Credentials.secretAccessKey.key | quote }}
     {{- end }}
-    {{- if .Values.postgresql.barmanObjectStore.azureCredentials }}
+    {{- if .Values.postgresql.barmanObjectStore.azureCredentials.connectionString.name }}
     azureCredentials:
       connectionString:
         name: {{ .Values.postgresql.barmanObjectStore.azureCredentials.connectionString.name | quote }}
         key: {{ .Values.postgresql.barmanObjectStore.azureCredentials.connectionString.key | quote }}
     {{- end }}
-    {{- if .Values.postgresql.barmanObjectStore.gcsCredentials }}
+    {{- if .Values.postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.name }}
     gcsCredentials:
       applicationCredentials:
         name: {{ .Values.postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.name | quote }}
