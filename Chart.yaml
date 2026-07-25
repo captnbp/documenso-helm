@@ -16,7 +16,7 @@ dependencies:
       - bitnami-common
     version: 2.x.x
 description: "Documenso is an open-source document signing platform"
-home: https://github.com/documenso/documenso
+home: https://github.com/captnbp/documenso-helm
 icon: https://documenso.com/favicon.ico
 keywords:
   - documenso
@@ -28,5 +28,5 @@ maintainers:
     url: https://github.com/captnbp
 sources:
   - https://github.com/documenso/documenso
-  - https://lab.frogg.it/doca/documenso-helm
+  - https://github.com/captnbp/documenso-helm
 version: 0.4.4
