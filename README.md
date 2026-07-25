@@ -316,8 +316,8 @@ $ helm delete --purge my-release
 | Name                                                | Description                                                                                                | Value            |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------- |
 | `schedulerName`                                     | Specifies the schedulerName, if it's nil uses kube-scheduler                                               | `""`             |
-| `updateStrategy.type`                               | documensowarden statefulset strategy type                                                                  | `RollingUpdate`  |
-| `updateStrategy.rollingUpdate`                      | documensowarden statefulset rolling update configuration parameters                                        | `{}`             |
+| `updateStrategy.type`                               | Documenso statefulset strategy type                                                                  | `RollingUpdate`  |
+| `updateStrategy.rollingUpdate`                      | Documenso statefulset rolling update configuration parameters                                        | `{}`             |
 | `hostAliases`                                       | documenso pod host aliases                                                                                 | `[]`             |
 | `containerPorts.http`                               | documenso container port to open for documenso http                                                        | `3000`           |
 | `podSecurityContext.enabled`                        | Enable pod Security Context                                                                                | `true`           |
@@ -409,7 +409,7 @@ $ helm delete --purge my-release
 
 | Name                                          | Description                                                      | Value   |
 | --------------------------------------------- | ---------------------------------------------------------------- | ------- |
-| `serviceAccount.create`                       | Enable the creation of a ServiceAccount for documensowarden pods | `true`  |
+| `serviceAccount.create`                       | Enable the creation of a ServiceAccount for Documenso pods | `true`  |
 | `serviceAccount.name`                         | Name of the created ServiceAccount                               | `""`    |
 | `serviceAccount.automountServiceAccountToken` | Auto-mount the service account token in the pod                  | `false` |
 | `serviceAccount.annotations`                  | Additional custom annotations for the ServiceAccount             | `{}`    |
