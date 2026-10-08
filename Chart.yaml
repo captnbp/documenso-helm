@@ -2,13 +2,13 @@ annotations:
   category: DeveloperTools
   artifacthub.io/images: |
     - name: documenso
-      image: docker.io/documenso/documenso:v2.18.0
+      image: docker.io/documenso/documenso:v2.20.0
     - name: postgresql
       image: ghcr.io/cloudnative-pg/postgresql:18.4-system-trixie
   artifacthub.io/license: MIT
 name: documenso
 apiVersion: v2
-appVersion: 2.18.0
+appVersion: 2.20.0
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
@@ -29,4 +29,4 @@ maintainers:
 sources:
   - https://github.com/documenso/documenso
   - https://github.com/captnbp/documenso-helm
-version: 0.4.6
+version: 0.4.7
